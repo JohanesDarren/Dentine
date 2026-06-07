@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
 import { Activity, Users, FileWarning, Camera } from "lucide-react";
 import DentalScene, { mockConditions } from "../components/DentalScene";
+import { getDashboardStats, getRecentDiagnoses } from '../lib/db';
 
 // SECTION 1: Pills Data
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -63,8 +64,29 @@ const activityData = [
 export default function Dashboard() {
   const [selectedDay, setSelectedDay] = useState(TODAY);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [stats, setStats] = useState(statsData);
+  const [recentActivity, setRecentActivity] = useState(activityData);
 
-  const filteredActivity = activityData.filter(item => item.day === selectedDay);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const stats = await getDashboardStats()
+        const recent = await getRecentDiagnoses(5)
+        
+        if (stats && stats.length > 0) {
+          setStats(stats)
+        }
+        if (recent && recent.length > 0) {
+          setRecentActivity(recent)
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard:', err)
+      }
+    }
+    loadData()
+  }, [])
+
+  const filteredActivity = recentActivity.filter(item => item.day === selectedDay);
   const totalConditions = pieData.reduce((acc, curr) => acc + curr.value, 0);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -113,7 +135,7 @@ export default function Dashboard() {
 
       {/* SECTION 2 — Stat Cards Row (4 cards, full width) */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mt-2">
-        {statsData.map((stat, i) => (
+        {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
