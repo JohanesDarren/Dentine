@@ -32,3 +32,23 @@ export async function getRecentDiagnoses(limit = 5) {
   }
   return data || [];
 }
+
+export async function uploadDiagnosisImage(file: File, filename: string): Promise<string> {
+  const { error } = await supabase.storage
+    .from('diagnosis-images')
+    .upload(`public/${filename}`, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('diagnosis-images')
+    .getPublicUrl(`public/${filename}`);
+
+  return publicUrl;
+}

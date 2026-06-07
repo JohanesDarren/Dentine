@@ -3,19 +3,56 @@ import DiagnosisResults, { ScanResult } from "../components/DiagnosisResults";
 import SmartUploadZone from "../components/SmartUploadZone";
 import DentalScene, { mockConditions } from "../components/DentalScene";
 import PatientBiodataForm, { PatientSummaryCard } from "../components/PatientBiodataForm";
-
-const MOCK_XRAY_RESULTS: ScanResult[] = [
-  { id: "1", condition: "Class II Cavity", severity: "Severe", confidence: 94, teeth: "U7", description: "Deep decay reaching the dentin layer. Immediate restoration recommended.", x: 25, y: 30, w: 15, h: 20 },
-  { id: "2", condition: "Bone Loss", severity: "Mild", confidence: 82, teeth: "L4", description: "Slight marginal bone loss observed.", x: 60, y: 70, w: 18, h: 10 },
-  { id: "3", condition: "Healthy Crown", severity: "Healthy", confidence: 99, teeth: "U2", description: "No structural anomalies detected.", x: 45, y: 15, w: 12, h: 15 },
-];
+import { diagnoseXray, saveDiagnosis } from '../lib/api';
+import { uploadDiagnosisImage } from '../lib/db';
 
 export default function DiagnoseXRay() {
   const [analyzedImage, setAnalyzedImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [patientData, setPatientData] = useState<any>(null);
+  const [diagnosisResults, setDiagnosisResults] = useState<any>(null);
+  const [overallSeverity, setOverallSeverity] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // In a real app, this would be fetched from API and set to state
-  const diagnosisResults = null;
+  const handleAnalyze = async (url: string, file: File) => {
+    setIsAnalyzing(true);
+    try {
+      const result = await diagnoseXray(file);
+      setDiagnosisResults(result.conditions);
+      setOverallSeverity(result.overall_severity);
+      setAnalyzedImage(url);
+      setImageFile(file);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to analyze image");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!imageFile || !patientData || !diagnosisResults) return;
+    setIsSaving(true);
+    try {
+      const filename = `${crypto.randomUUID()}-${imageFile.name}`;
+      const imageUrl = await uploadDiagnosisImage(imageFile, filename);
+      await saveDiagnosis({
+        patient_id: patientData.id || crypto.randomUUID(),
+        mode: "xray",
+        overall_severity: overallSeverity,
+        image_url: imageUrl,
+        conditions: diagnosisResults,
+        total_detected: diagnosisResults.length
+      });
+      alert("Diagnosis saved successfully!");
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("Failed to save diagnosis");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -32,13 +69,15 @@ export default function DiagnoseXRay() {
         ) : (
           <>
             <PatientSummaryCard patient={patientData} onClear={() => { setPatientData(null); setAnalyzedImage(null); }} />
-            {analyzedImage ? (
+            {analyzedImage && diagnosisResults ? (
               <div>
                 <DiagnosisResults 
                   image={analyzedImage} 
-                  results={MOCK_XRAY_RESULTS} 
+                  results={diagnosisResults} 
                   mode="xray" 
-                  onReset={() => setAnalyzedImage(null)} 
+                  onReset={() => { setAnalyzedImage(null); setDiagnosisResults(null); setImageFile(null); }} 
+                  onSave={handleSave}
+                  isSaving={isSaving}
                 />
                 <div style={{ position: 'relative', marginTop: '32px' }}>
                   <h3 className="text-xl font-semibold tracking-tight text-gray-900 mb-1">
@@ -57,7 +96,20 @@ export default function DiagnoseXRay() {
                 </div>
               </div>
             ) : (
-              <SmartUploadZone onAnalyze={(url) => setAnalyzedImage(url)} />
+              <div className="relative">
+                {isAnalyzing && (
+                  <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center rounded-2xl backdrop-blur-sm">
+                    <div className="flex flex-col items-center">
+                      <svg className="animate-spin h-8 w-8 text-[#273d58] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p className="text-[#273d58] font-medium">Analyzing X-Ray with AI...</p>
+                    </div>
+                  </div>
+                )}
+                <SmartUploadZone onAnalyze={handleAnalyze} />
+              </div>
             )}
           </>
         )}

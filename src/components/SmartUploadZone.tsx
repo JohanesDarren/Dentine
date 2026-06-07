@@ -2,10 +2,11 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FolderOpen, ZoomIn, ZoomOut, RotateCw, Trash2 } from 'lucide-react';
 
-export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: string) => void }) {
+export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: string, file: File) => void }) {
   const [state, setState] = useState<'IDLE' | 'DRAG_OVER' | 'UPLOADING' | 'UPLOADED'>('IDLE');
   const [progress, setProgress] = useState(0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [fileSize, setFileSize] = useState('');
   
@@ -45,6 +46,7 @@ export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: s
         setTimeout(() => {
           const url = URL.createObjectURL(file);
           setFileUrl(url);
+          setSelectedFile(file);
           setState('UPLOADED');
           setProgress(0);
         }, 300);
@@ -75,6 +77,7 @@ export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: s
   const handleReset = () => {
     if (fileUrl) URL.revokeObjectURL(fileUrl);
     setFileUrl(null);
+    setSelectedFile(null);
     setFileName('');
     setFileSize('');
     setScale(1);
@@ -257,7 +260,7 @@ export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: s
               <motion.button
                 whileHover={{ scale: 1.01, backgroundColor: "#1e2f44" }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => onAnalyze && fileUrl && onAnalyze(fileUrl)}
+                onClick={() => onAnalyze && fileUrl && selectedFile && onAnalyze(fileUrl, selectedFile)}
                 className="w-full bg-[#273d58] text-white rounded-xl h-[52px] font-semibold text-base shadow-sm flex items-center justify-center"
               >
                 Analyze Image
