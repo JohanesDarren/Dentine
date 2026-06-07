@@ -6,3 +6,15 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Python virtual environments
+backend/venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Python models
+backend/nsitnov/
