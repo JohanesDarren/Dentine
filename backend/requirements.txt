@@ -3,3 +3,6 @@ flask
 waitress
 pillow
 roboflow
+python-dotenv
+flask-cors
+google-generativeai
