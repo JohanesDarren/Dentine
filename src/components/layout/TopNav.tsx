@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
-import { Activity, Camera, LayoutDashboard, Search, Bell, Settings, Users } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Activity, Camera, LayoutDashboard, Search, Bell, Settings, Users, LogOut } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useAuth } from "../../context/AuthContext";
+import { getProfile } from "../../lib/auth";
+import { useEffect, useState } from "react";
 
 const MotionLink = motion.create(Link);
 
@@ -14,6 +17,20 @@ const NAV_ITEMS = [
 
 export function TopNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    getProfile().then(setProfile).catch(console.error);
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  const initials = profile?.full_name ? profile.full_name.substring(0, 2).toUpperCase() : "DR";
 
   return (
     <header className="h-24 w-full px-8 flex items-center justify-between shrink-0 bg-transparent">
@@ -61,12 +78,12 @@ export function TopNav() {
         </div>
         
         <div className="flex items-center gap-3 bg-white border border-gray-100 shadow-sm rounded-full py-1.5 px-2">
-          <div className="w-8 h-8 bg-blue-100 rounded-full overflow-hidden flex-shrink-0">
-            <img src="https://i.pravatar.cc/100?img=11" alt="Dr. Jackson" className="w-full h-full object-cover" />
+          <div className="w-8 h-8 bg-blue-100 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-blue-600 text-xs">
+            {initials}
           </div>
           <div className="flex flex-col mr-3 justify-center">
-            <span className="text-[10px] text-gray-400 font-medium leading-[1]">Welcome</span>
-            <span className="text-sm font-bold text-gray-900 leading-[1.2]">Jackson</span>
+            <span className="text-sm font-bold text-gray-900 leading-[1.2]">{profile?.full_name || "Doctor"}</span>
+            <span className="text-[10px] text-gray-400 font-medium leading-[1]">{profile?.clinic_name || "Clinic"}</span>
           </div>
         </div>
 
@@ -76,6 +93,9 @@ export function TopNav() {
           </button>
           <button className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 shadow-sm transition-colors">
             <Settings className="w-[18px] h-[18px]" />
+          </button>
+          <button onClick={handleSignOut} className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-red-500 shadow-sm transition-colors" title="Sign out">
+            <LogOut className="w-[18px] h-[18px]" />
           </button>
         </div>
       </div>

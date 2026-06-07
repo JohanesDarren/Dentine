@@ -52,3 +52,21 @@ export async function uploadDiagnosisImage(file: File, filename: string): Promis
 
   return publicUrl;
 }
+
+export async function createPatient(patient: {
+  name: string
+  age?: number
+  gender?: string
+  notes?: string
+}) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  
+  const { data, error } = await supabase
+    .from('patients')
+    .insert([{ ...patient, user_id: user.id }])
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}

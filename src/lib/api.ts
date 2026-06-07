@@ -48,6 +48,7 @@ export async function diagnoseXray(
 }
 
 export async function saveDiagnosis(data: {
+  user_id: string
   patient_id: string
   mode: string
   overall_severity: string
@@ -60,6 +61,7 @@ export async function saveDiagnosis(data: {
 }
 
 export async function createPatientAPI(data: {
+  user_id?: string
   name: string
   age?: number
   gender?: string
@@ -69,7 +71,7 @@ export async function createPatientAPI(data: {
   return response.data
 }
 
-export async function getPatientsAPI() {
-  const response = await api.get('/patients')
+export async function getPatientsAPI(userId?: string) {
+  const response = await api.get('/patients', { params: { user_id: userId } })
   return response.data.patients
 }

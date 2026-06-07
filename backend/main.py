@@ -41,6 +41,7 @@ class ConditionItem(BaseModel):
   bbox: Optional[List[float]] = None
 
 class SaveDiagnosisRequest(BaseModel):
+  user_id: str
   patient_id: str
   mode: str
   overall_severity: str
@@ -49,6 +50,7 @@ class SaveDiagnosisRequest(BaseModel):
   total_detected: int
 
 class CreatePatientRequest(BaseModel):
+  user_id: Optional[str] = None
   name: str
   age: Optional[int] = None
   gender: Optional[str] = None
@@ -165,6 +167,7 @@ async def diagnose_photo(file: UploadFile = File(...)):
 def save_diagnosis(body: SaveDiagnosisRequest):
   try:
     response = supabase_client.table("diagnoses").insert({
+      "user_id": body.user_id,
       "patient_id": body.patient_id,
       "mode": body.mode,
       "overall_severity": body.overall_severity,
@@ -196,9 +199,12 @@ def save_diagnosis(body: SaveDiagnosisRequest):
     raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/patients")
-def get_patients():
+def get_patients(user_id: str = None):
   try:
-    response = supabase_client.table("patients").select("*, diagnoses(count)").order("created_at", desc=True).execute()
+    query = supabase_client.table("patients").select("*, diagnoses(count)")
+    if user_id:
+      query = query.eq("user_id", user_id)
+    response = query.order("created_at", desc=True).execute()
     return {"patients": response.data}
   except Exception as e:
     raise HTTPException(status_code=500, detail=str(e))
@@ -207,6 +213,7 @@ def get_patients():
 def create_patient(body: CreatePatientRequest):
   try:
     response = supabase_client.table("patients").insert({
+      "user_id": body.user_id,
       "name": body.name,
       "age": body.age,
       "gender": body.gender,

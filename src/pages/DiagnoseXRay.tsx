@@ -5,6 +5,7 @@ import DentalScene, { mockConditions } from "../components/DentalScene";
 import PatientBiodataForm, { PatientSummaryCard } from "../components/PatientBiodataForm";
 import { diagnoseXray, saveDiagnosis } from '../lib/api';
 import { uploadDiagnosisImage } from '../lib/db';
+import { getCurrentUser } from '../lib/auth';
 
 export default function DiagnoseXRay() {
   const [analyzedImage, setAnalyzedImage] = useState<string | null>(null);
@@ -32,13 +33,17 @@ export default function DiagnoseXRay() {
   };
 
   const handleSave = async () => {
-    if (!imageFile || !patientData || !diagnosisResults) return;
+    if (!imageFile || !diagnosisResults) return;
     setIsSaving(true);
     try {
+      const user = await getCurrentUser();
+      if (!user) throw new Error("Not authenticated");
+
       const filename = `${crypto.randomUUID()}-${imageFile.name}`;
       const imageUrl = await uploadDiagnosisImage(imageFile, filename);
       await saveDiagnosis({
-        patient_id: patientData.id || crypto.randomUUID(),
+        user_id: user.id,
+        patient_id: patientData?.id || crypto.randomUUID(),
         mode: "xray",
         overall_severity: overallSeverity,
         image_url: imageUrl,

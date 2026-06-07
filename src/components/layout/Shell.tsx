@@ -4,9 +4,9 @@ import { useLocation } from "react-router-dom";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const isLandingPage = location.pathname === "/";
+  const isPublicPage = location.pathname === "/" || location.pathname === "/login" || location.pathname === "/register";
 
-  if (isLandingPage) {
+  if (isPublicPage) {
     return <main className="w-full min-h-screen">{children}</main>;
   }
 
