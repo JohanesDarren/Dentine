@@ -2,7 +2,8 @@ import { useState } from "react";
 import DiagnosisResults, { ScanResult } from "../components/DiagnosisResults";
 import SmartUploadZone from "../components/SmartUploadZone";
 import DentalScene, { mockConditions } from "../components/DentalScene";
-import PatientBiodataForm, { PatientSummaryCard } from "../components/PatientBiodataForm";
+import PatientSelector from "../components/PatientSelector";
+import { PatientSummaryCard } from "../components/PatientBiodataForm";
 import { diagnosePhoto, saveDiagnosis } from '../lib/api';
 import { uploadDiagnosisImage } from '../lib/db';
 import { getCurrentUser } from '../lib/auth';
@@ -42,38 +43,11 @@ export default function DiagnosePhoto() {
       const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
-      let finalPatientId = patientData?.id;
-
-      if (!finalPatientId) {
-        const { createPatientAPI } = await import('../lib/api');
-        
-        let age = undefined;
-        if (patientData.dob) {
-           const birthDate = new Date(patientData.dob);
-           const today = new Date();
-           age = today.getFullYear() - birthDate.getFullYear();
-           const m = today.getMonth() - birthDate.getMonth();
-           if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-               age--;
-           }
-        }
-
-        const newPatient = await createPatientAPI({
-           name: patientData.name,
-           age: age,
-           gender: patientData.gender === 'unspecified' ? undefined : patientData.gender,
-           notes: patientData.notes,
-           user_id: user.id
-        });
-        finalPatientId = newPatient.id;
-        setPatientData({ ...patientData, id: finalPatientId });
-      }
-
       const filename = `${crypto.randomUUID()}-${imageFile.name}`;
       const imageUrl = await uploadDiagnosisImage(imageFile, filename);
       await saveDiagnosis({
         user_id: user.id,
-        patient_id: finalPatientId,
+        patient_id: patientData.id,
         mode: "photo",
         overall_severity: overallSeverity,
         image_url: imageUrl,
@@ -100,7 +74,7 @@ export default function DiagnosePhoto() {
 
       <div className="flex-1 flex flex-col min-h-[500px]">
         {!patientData ? (
-          <PatientBiodataForm onSubmit={setPatientData} />
+          <PatientSelector onSelect={setPatientData} />
         ) : (
           <>
             <PatientSummaryCard patient={patientData} onClear={() => { setPatientData(null); setAnalyzedImage(null); }} />
@@ -110,6 +84,7 @@ export default function DiagnosePhoto() {
                   image={analyzedImage} 
                   results={diagnosisResults} 
                   mode="photo" 
+                  patient={patientData}
                   onReset={() => { setAnalyzedImage(null); setDiagnosisResults(null); setImageFile(null); }} 
                   onSave={handleSave}
                   isSaving={isSaving}

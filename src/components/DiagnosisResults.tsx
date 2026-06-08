@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ZoomIn, ZoomOut, RotateCw, Trash2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCw, Trash2, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export interface ScanResult {
   id: string;
@@ -19,15 +21,44 @@ interface DiagnosisResultsProps {
   image: string; // URL
   results: ScanResult[];
   mode: "photo" | "xray";
+  patient?: any;
   onReset?: () => void;
   onSave?: () => void;
   isSaving?: boolean;
 }
 
-export default function DiagnosisResults({ image, results, mode, onReset, onSave, isSaving }: DiagnosisResultsProps) {
+export default function DiagnosisResults({ image, results, mode, patient, onReset, onSave, isSaving }: DiagnosisResultsProps) {
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById('pdf-report-template');
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Dentine_Diagnosis_${patient?.name || 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err: any) {
+      console.error('PDF Export Error:', err);
+      alert(`Failed to generate PDF. Error: ${err?.message || err}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
   
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 1));
@@ -258,11 +289,35 @@ export default function DiagnosisResults({ image, results, mode, onReset, onSave
             whileHover={{ scale: 1.02, backgroundColor: "#f8fafc" }}
             whileTap={{ scale: 0.98 }}
             onClick={onReset}
-            disabled={isSaving}
+            disabled={isSaving || isExporting}
             className="flex-1 bg-white border border-gray-200 text-gray-700 rounded-xl py-3 font-semibold text-sm shadow-sm disabled:opacity-50"
           >
             New Diagnosis
           </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.02, backgroundColor: "#f8fafc" }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleExportPDF}
+            disabled={isSaving || isExporting}
+            className="flex-1 bg-white border border-gray-200 text-[#273d58] rounded-xl py-3 font-semibold text-sm shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isExporting ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4 text-[#273d58]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Exporting...
+              </span>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Export PDF
+              </>
+            )}
+          </motion.button>
+
           <motion.button
             whileHover={!isSaving ? { scale: 1.02, backgroundColor: "#1e2f44" } : {}}
             whileTap={!isSaving ? { scale: 0.98 } : {}}
@@ -282,6 +337,103 @@ export default function DiagnosisResults({ image, results, mode, onReset, onSave
           </motion.button>
         </div>
 
+      </div>
+
+      {/* HIDDEN PDF TEMPLATE */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <div id="pdf-report-template" className="w-[800px] bg-[#ffffff] p-12 text-[#111827] font-sans">
+          {/* Header */}
+          <div className="flex justify-between items-center border-b-2 border-[#273d58] pb-6 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#273d58] text-[#ffffff] flex items-center justify-center rounded-xl font-bold text-2xl">
+                D
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-[#273d58] tracking-tight">Dentine</h1>
+                <p className="text-sm font-medium text-[#6b7280] tracking-widest uppercase">AI Dental Analysis</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-[#111827]">Diagnosis Report</p>
+              <p className="text-sm text-[#6b7280]">{new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          {/* Patient Details */}
+          {patient && (
+            <div className="bg-[#f9fafb] rounded-xl p-6 mb-8 border border-[#e5e7eb]">
+              <h3 className="text-xs font-bold text-[#9ca3af] uppercase tracking-wider mb-4">Patient Information</h3>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-2">
+                  <p className="text-sm text-[#6b7280]">Name</p>
+                  <p className="font-bold text-lg">{patient.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-[#6b7280]">Patient ID</p>
+                  <p className="font-bold text-lg truncate" title={patient.id}>{patient.id ? patient.id.substring(0, 8) + '...' : "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-[#6b7280]">Age / Gender</p>
+                  <p className="font-bold text-lg">{patient.age || "-"} / <span className="capitalize">{patient.gender || "-"}</span></p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Image & Severity */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="text-xs font-bold text-[#9ca3af] uppercase tracking-wider mb-3">Analyzed Image</h3>
+              <div className="rounded-xl overflow-hidden border border-[#e5e7eb] bg-[#f9fafb] h-64 flex items-center justify-center">
+                <img src={image} className="max-w-full max-h-full object-contain" alt="Analyzed Scan" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-[#9ca3af] uppercase tracking-wider mb-3">Overall Assessment</h3>
+              <div className="h-64 rounded-xl border border-[#e5e7eb] flex flex-col items-center justify-center bg-[#f9fafb] p-6">
+                <h2 className="text-4xl font-black mb-2 tracking-tight" style={{ color: getColor(maxSeverityScore > 66 ? "Severe" : maxSeverityScore > 33 ? "Mild" : "Healthy") }}>
+                  {maxSeverityScore > 66 ? "SEVERE" : maxSeverityScore > 33 ? "MILD" : "HEALTHY"}
+                </h2>
+                <p className="text-[#6b7280] text-center text-sm mt-2">
+                  Based on AI analysis, <span className="font-bold text-[#111827]">{results.length} condition(s)</span> were detected in this {mode} scan.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Findings */}
+          <div>
+            <h3 className="text-xs font-bold text-[#9ca3af] uppercase tracking-wider mb-4">Detailed Findings</h3>
+            <div className="space-y-4">
+              {results.length === 0 ? (
+                <p className="text-[#6b7280] italic">No conditions detected. Appears healthy.</p>
+              ) : (
+                results.map((res, i) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-xl border border-[#e5e7eb] bg-[#ffffff]">
+                    <div className="w-1.5 rounded-full" style={{ backgroundColor: getColor(res.severity) }}></div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-lg text-[#111827]">{res.condition}</h4>
+                        <span className="font-bold text-xs px-3 py-1 rounded-full uppercase" style={{ backgroundColor: `${getColor(res.severity)}20`, color: getColor(res.severity) }}>
+                          {res.severity}
+                        </span>
+                      </div>
+                      <p className="text-[#4b5563] mt-1 text-sm leading-relaxed">{res.description}</p>
+                      <div className="flex gap-4 mt-3 text-xs font-bold text-[#9ca3af] uppercase tracking-wide">
+                        {res.teeth && <span>Tooth: {res.teeth}</span>}
+                        <span>Confidence: {res.confidence}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          
+          <div className="mt-12 pt-6 border-t border-[#e5e7eb] text-center">
+            <p className="text-xs text-[#9ca3af] font-medium">Generated by Dentine AI — Not a substitute for professional medical advice.</p>
+          </div>
+        </div>
       </div>
     </div>
   );
