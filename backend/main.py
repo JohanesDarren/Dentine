@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 import io, os, uuid
+import traceback
 from datetime import datetime
 
 load_dotenv()
@@ -146,21 +147,23 @@ def health():
   }
 
 @app.post("/diagnose/xray")
-async def diagnose_xray(file: UploadFile = File(...)):
+async def diagnose_xray(image_file: UploadFile = File(...)):
   try:
-    image_bytes = await file.read()
+    image_bytes = await image_file.read()
     result = run_inference(xray_model, image_bytes, "xray")
     return result
   except Exception as e:
+    print(traceback.format_exc())
     raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/diagnose/photo")
-async def diagnose_photo(file: UploadFile = File(...)):
+async def diagnose_photo(image_file: UploadFile = File(...)):
   try:
-    image_bytes = await file.read()
+    image_bytes = await image_file.read()
     result = run_inference(photo_model, image_bytes, "photo")
     return result
   except Exception as e:
+    print(traceback.format_exc())
     raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/save-diagnosis")
@@ -196,6 +199,7 @@ def save_diagnosis(body: SaveDiagnosisRequest):
     supabase_client.table("conditions").insert(rows).execute()
     return {"success": True, "diagnosis_id": diagnosis_id}
   except Exception as e:
+    print(traceback.format_exc())
     raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/patients")
@@ -207,24 +211,33 @@ def get_patients(user_id: str = None):
     response = query.order("created_at", desc=True).execute()
     return {"patients": response.data}
   except Exception as e:
+    print(traceback.format_exc())
     raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/patients")
-def create_patient(body: CreatePatientRequest):
+async def create_patient(patient: CreatePatientRequest):
   try:
-    response = supabase_client.table("patients").insert({
-      "user_id": body.user_id,
-      "name": body.name,
-      "age": body.age,
-      "gender": body.gender,
-      "notes": body.notes
-    }).execute()
+    insert_data = {
+      "name": patient.name,
+    }
+    if patient.age is not None:
+      insert_data["age"] = patient.age
+    if patient.gender is not None:
+      insert_data["gender"] = patient.gender
+    if patient.notes is not None:
+      insert_data["notes"] = patient.notes
+    if patient.user_id is not None:
+      insert_data["user_id"] = patient.user_id
     
-    if not response.data or len(response.data) == 0:
+    response = supabase_client.table("patients").insert(insert_data).execute()
+    
+    if not response.data:
       raise HTTPException(status_code=500, detail="Failed to create patient")
       
     return response.data[0]
   except Exception as e:
+    print(f"Create patient error: {str(e)}")
+    print(traceback.format_exc())
     raise HTTPException(status_code=500, detail=str(e))
 
 # SECTION 7 — RUN:

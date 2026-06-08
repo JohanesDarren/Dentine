@@ -7,10 +7,13 @@ import { diagnoseXray, saveDiagnosis } from '../lib/api';
 import { uploadDiagnosisImage } from '../lib/db';
 import { getCurrentUser } from '../lib/auth';
 
+import { useLocation } from "react-router-dom";
+
 export default function DiagnoseXRay() {
+  const location = useLocation();
   const [analyzedImage, setAnalyzedImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [patientData, setPatientData] = useState<any>(null);
+  const [patientData, setPatientData] = useState<any>(location.state?.patient || null);
   const [diagnosisResults, setDiagnosisResults] = useState<any>(null);
   const [overallSeverity, setOverallSeverity] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -39,11 +42,38 @@ export default function DiagnoseXRay() {
       const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
+      let finalPatientId = patientData?.id;
+
+      if (!finalPatientId) {
+        const { createPatientAPI } = await import('../lib/api');
+        
+        let age = undefined;
+        if (patientData.dob) {
+           const birthDate = new Date(patientData.dob);
+           const today = new Date();
+           age = today.getFullYear() - birthDate.getFullYear();
+           const m = today.getMonth() - birthDate.getMonth();
+           if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+               age--;
+           }
+        }
+
+        const newPatient = await createPatientAPI({
+           name: patientData.name,
+           age: age,
+           gender: patientData.gender === 'unspecified' ? undefined : patientData.gender,
+           notes: patientData.notes,
+           user_id: user.id
+        });
+        finalPatientId = newPatient.id;
+        setPatientData({ ...patientData, id: finalPatientId });
+      }
+
       const filename = `${crypto.randomUUID()}-${imageFile.name}`;
       const imageUrl = await uploadDiagnosisImage(imageFile, filename);
       await saveDiagnosis({
         user_id: user.id,
-        patient_id: patientData?.id || crypto.randomUUID(),
+        patient_id: finalPatientId,
         mode: "xray",
         overall_severity: overallSeverity,
         image_url: imageUrl,

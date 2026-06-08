@@ -4,53 +4,53 @@ export async function getDashboardStats() {
   const { data, error } = await supabase
     .from('dashboard_stats')
     .select('*')
-    .single();
-
+    .single()
   if (error) {
-    console.error('Error fetching dashboard stats:', error);
-    // Fallback to default stats if table doesn't exist
-    return [
-      { label: "Analyses Completed", value: "0", change: "0%", isPositive: true, sparkline: [0, 0, 0, 0, 0, 0, 0] },
-      { label: "New Patients", value: "0", change: "0%", isPositive: true, sparkline: [0, 0, 0, 0, 0, 0, 0] },
-      { label: "Anomalies Found", value: "0", change: "0%", isPositive: false, sparkline: [0, 0, 0, 0, 0, 0, 0] },
-      { label: "Scans Processed", value: "0", change: "0%", isPositive: true, sparkline: [0, 0, 0, 0, 0, 0, 0] },
-    ];
+    console.error('Dashboard stats error:', error)
+    return {
+      total_patients: 0,
+      total_diagnoses: 0,
+      diagnoses_today: 0,
+      photo_analyses: 0,
+      xray_analyses: 0
+    }
   }
-  return data?.stats || [];
+  return data
 }
 
 export async function getRecentDiagnoses(limit = 5) {
   const { data, error } = await supabase
     .from('recent_diagnoses')
     .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
+    .limit(limit)
   if (error) {
-    console.error('Error fetching recent diagnoses:', error);
-    return [];
+    console.error('Recent diagnoses error:', error)
+    return []
   }
-  return data || [];
+  return data || []
 }
 
-export async function uploadDiagnosisImage(file: File, filename: string): Promise<string> {
-  const { error } = await supabase.storage
+export async function uploadDiagnosisImage(
+  file: File,
+  diagnosisId: string
+): Promise<string> {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${diagnosisId}-${Date.now()}.${fileExt}`
+  
+  const { data, error } = await supabase.storage
     .from('diagnosis-images')
-    .upload(`public/${filename}`, file, {
+    .upload(fileName, file, {
       cacheControl: '3600',
       upsert: false
-    });
-
-  if (error) {
-    console.error('Error uploading image:', error);
-    throw error;
-  }
-
-  const { data: { publicUrl } } = supabase.storage
+    })
+  
+  if (error) throw error
+  
+  const { data: urlData } = supabase.storage
     .from('diagnosis-images')
-    .getPublicUrl(`public/${filename}`);
-
-  return publicUrl;
+    .getPublicUrl(fileName)
+  
+  return urlData.publicUrl
 }
 
 export async function createPatient(patient: {

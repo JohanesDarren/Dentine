@@ -64,26 +64,48 @@ const activityData = [
 export default function Dashboard() {
   const [selectedDay, setSelectedDay] = useState(TODAY);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [stats, setStats] = useState(statsData);
-  const [recentActivity, setRecentActivity] = useState(activityData);
+  const [stats, setStats] = useState<any[]>(statsData);
+  const [recentActivity, setRecentActivity] = useState<any[]>(activityData);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadDashboard() {
       try {
-        const stats = await getDashboardStats()
-        const recent = await getRecentDiagnoses(5)
+        setLoading(true)
+        const [statsDataResult, recent] = await Promise.all([
+          getDashboardStats(),
+          getRecentDiagnoses(5)
+        ])
         
-        if (stats && stats.length > 0) {
-          setStats(stats)
+        if (statsDataResult) {
+          setStats([
+            { label: "Total Patients", value: (statsDataResult.total_patients || 0).toString(), change: "", isPositive: true, sparkline: [2, 3, 2, 5, 4, 7, 8], icon: Users },
+            { label: "Diagnoses Today", value: (statsDataResult.diagnoses_today || 0).toString(), change: "", isPositive: true, sparkline: [4, 6, 8, 7, 10, 14, 18], icon: Activity },
+            { label: "Photo Analyses", value: (statsDataResult.photo_analyses || 0).toString(), change: "", isPositive: true, sparkline: [10, 8, 12, 10, 8, 6, 4], icon: Camera },
+            { label: "X-Ray Analyses", value: (statsDataResult.xray_analyses || 0).toString(), change: "", isPositive: true, sparkline: [20, 30, 25, 40, 50, 45, 60], icon: Camera },
+          ])
         }
-        if (recent && recent.length > 0) {
-          setRecentActivity(recent)
+        
+        if (recent) {
+          const formattedRecent = recent.map((r: any) => ({
+            id: r.id,
+            patient: r.patient_name || 'Unknown Patient',
+            type: r.mode === 'photo' ? 'Photo' : 'X-Ray',
+            condition: r.conditions_detected ? `${r.conditions_detected} conditions` : 'Healthy',
+            severity: r.overall_severity || 'Unknown',
+            date: new Date(r.created_at).toLocaleDateString(),
+            day: TODAY, // Force show in current filter
+            raw: r
+          }))
+          setRecentActivity(formattedRecent)
         }
       } catch (err) {
-        console.error('Failed to load dashboard:', err)
+        console.error('Dashboard load error:', err)
+      } finally {
+        setLoading(false)
       }
     }
-    loadData()
+    loadDashboard()
   }, [])
 
   const filteredActivity = recentActivity.filter(item => item.day === selectedDay);
@@ -323,7 +345,7 @@ export default function Dashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button className="text-sm font-semibold text-[#273d58] hover:underline">
-                          Review
+                          View Results
                         </button>
                       </td>
                     </motion.tr>
