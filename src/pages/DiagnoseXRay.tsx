@@ -28,9 +28,10 @@ export default function DiagnoseXRay() {
       setOverallSeverity(result.overall_severity);
       setAnalyzedImage(url);
       setImageFile(file);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Failed to analyze image");
+      const backendMsg = error.response?.data?.detail || error.message;
+      alert(`Failed to analyze image: ${backendMsg}`);
     } finally {
       setIsAnalyzing(false);
     }

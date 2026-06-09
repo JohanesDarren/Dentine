@@ -250,14 +250,45 @@ async def diagnose_photo(
     and overall oral health. Do not return empty array.
     """
     
-    response = gemini_model.generate_content([
-      prompt,
-      {"mime_type": image_part["mime_type"], 
-       "data": image_b64}
-    ])
+    from google.generativeai.types import HarmCategory, HarmBlockThreshold
+    from google.api_core.exceptions import ResourceExhausted
+    
+    safety_settings = {
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+    }
+    
+    try:
+        response = gemini_model.generate_content(
+          [prompt, {"mime_type": image_part["mime_type"], "data": image_b64}],
+          safety_settings=safety_settings
+        )
+    except ResourceExhausted:
+        raise HTTPException(
+            status_code=429,
+            detail="Google Gemini API rate limit reached (15 requests per minute). Please wait 60 seconds and try again!"
+        )
+    except Exception as e:
+        with open("error.log", "w") as f:
+            f.write(f"Unhandled Gemini Error: {str(e)}\n")
+            import traceback
+            f.write(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gemini API Error: {str(e)}"
+        )
     
     # Parse Gemini response
-    response_text = response.text.strip()
+    try:
+        response_text = response.text.strip()
+    except ValueError as ve:
+        print(f"Gemini response was blocked: {response.prompt_feedback}")
+        raise HTTPException(
+            status_code=500,
+            detail="AI refused to analyze this image due to safety filters (often triggered by medical photos). Please try a different image."
+        )
     
     # Clean up response if it has markdown
     if "```json" in response_text:
@@ -311,8 +342,13 @@ async def diagnose_photo(
       status_code=500,
       detail=f"Failed to parse AI response: {str(e)}"
     )
+  except HTTPException as he:
+    raise he
   except Exception as e:
     import traceback
+    with open("error.log", "a") as f:
+        f.write(f"Outer Endpoint Error: {str(e)}\n")
+        f.write(traceback.format_exc())
     print(traceback.format_exc())
     raise HTTPException(
       status_code=500, 
