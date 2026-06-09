@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Globe, ArrowRight, ShieldCheck, Activity, Camera, ChevronDown } from "lucide-react";
+import { ArrowRight, ShieldCheck, Activity, Camera, ChevronDown } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -24,13 +24,15 @@ export default function Landing() {
             <Link to="/patients" className="text-sm font-medium text-white/90 hover:text-white px-5 py-2 transition-colors">Patients</Link>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-[#273d58] hover:text-[#1e2f44] cursor-pointer">
-              <Globe className="w-4 h-4" />
-              <span className="text-sm font-bold">Eng</span>
-            </div>
+          <div className="flex items-center gap-4">
             <Link 
-              to="/dashboard" 
+              to="/login" 
+              className="text-[#273d58] text-sm font-bold hover:text-[#1e2f44] transition-colors px-2"
+            >
+              Sign In
+            </Link>
+            <Link 
+              to="/register" 
               className="bg-[#273d58] text-white text-sm font-bold px-6 py-2.5 rounded-full shadow-sm hover:bg-[#1e2f44] transition-colors"
             >
               Sign Up
@@ -53,8 +55,8 @@ export default function Landing() {
           </div>
           
           <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-12 max-w-[1400px] mx-auto w-full pt-20">
-            <div className="flex flex-col md:flex-row md:items-end justify-between w-full h-full pb-32">
-              <div className="max-w-2xl mt-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between w-full h-full pb-20">
+              <div className="max-w-2xl">
                 <motion.h1 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -64,12 +66,12 @@ export default function Landing() {
                 </motion.h1>
               </div>
               
-              <div className="max-w-xs text-left md:text-right mt-8 md:mt-0 md:pb-8">
+              <div className="max-w-sm text-left md:text-right mt-8 md:mt-0">
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="text-white/90 text-[15px] font-medium leading-relaxed drop-shadow-sm"
+                  className="text-white/90 text-base font-medium leading-relaxed drop-shadow-sm"
                 >
                   Discover anomalous findings with AI. Empowering Your Practice Today, Enhancing Your Patients Tomorrow.
                 </motion.p>
@@ -88,7 +90,7 @@ export default function Landing() {
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 px-1">
               <h2 className="text-[22px] font-bold text-gray-900">Core Capabilities</h2>
-              <Link to="/dashboard" className="w-full md:w-auto bg-[#273d58] text-white text-sm font-bold px-8 py-3.5 rounded-2xl shadow-md hover:bg-[#1e2f44] transition-all text-center">
+              <Link to="/login" className="w-full md:w-auto bg-[#273d58] text-white text-sm font-bold px-8 py-3.5 rounded-2xl shadow-md hover:bg-[#1e2f44] transition-all text-center">
                 Launch Workspace
               </Link>
             </div>
@@ -99,12 +101,12 @@ export default function Landing() {
                  { icon: Camera, title: "Diagnostic Vision", desc: "Transform any standard intraoral photo into a heatmap of soft tissue inflammation and clear plaque indexing." },
                  { icon: ShieldCheck, title: "Compliant & Secure", desc: "Every scan is processed in zero-retention environment built strictly to GDPR and HIPAA clinical standards." },
                ].map((feat, i) => (
-                 <div key={i} className="bg-[#F8FAFC] rounded-[24px] p-6 border border-gray-100 shadow-sm flex flex-col items-start hover:shadow-md transition-all">
-                   <div className="text-[#273d58] mb-4 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                 <div key={i} className="bg-white rounded-[24px] p-6 lg:p-8 border border-gray-100 shadow-sm flex flex-col items-start hover:shadow-md transition-all">
+                   <div className="text-[#273d58] mb-5 bg-[#F8FAFC] p-3 rounded-xl shadow-sm border border-gray-100">
                      <feat.icon className="w-6 h-6" />
                    </div>
-                   <h3 className="text-base font-bold text-gray-900 mb-2">{feat.title}</h3>
-                   <p className="text-gray-500 text-[13px] leading-relaxed font-medium">{feat.desc}</p>
+                   <h3 className="text-lg font-bold text-gray-900 mb-3">{feat.title}</h3>
+                   <p className="text-gray-500 text-sm leading-relaxed font-medium">{feat.desc}</p>
                  </div>
                ))}
             </div>
@@ -134,7 +136,7 @@ export default function Landing() {
 
       {/* Footer Typography */}
       <footer className="w-full text-center pb-4 mt-auto">
-        <p className="text-[10px] text-[#273d58]/60 font-medium tracking-wide">
+        <p className="text-[6px] text-[#273d58]/30 font-medium tracking-widest uppercase">
           made by darren @2026 - blessed with the best
         </p>
       </footer>
