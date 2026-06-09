@@ -28,7 +28,8 @@ export default function Patients() {
   const fetchPatients = async () => {
     setIsLoading(true);
     try {
-      const data = await getPatientsAPI();
+      const user = await getCurrentUser();
+      const data = await getPatientsAPI(user?.id || '');
       setPatients(data || []);
     } catch (error) {
       console.error("Failed to fetch patients:", error);
@@ -284,7 +285,7 @@ export default function Patients() {
                           )}
                           
                           <button 
-                            onClick={() => navigate(`/results`, { state: { result: diag, imageUrl: diag.image_url } })}
+                            onClick={() => navigate(`/results/${diag.id}`)}
                             className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors border border-gray-200"
                           >
                             View Full Results

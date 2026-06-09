@@ -7,6 +7,7 @@ import DiagnoseXRay from "./pages/DiagnoseXRay";
 import Patients from "./pages/Patients";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Results from "./pages/Results";
 import { AnimatePresence } from "framer-motion";
 import { PageWrapper } from "./components/ui";
 import { AuthProvider } from "./context/AuthContext";
@@ -25,6 +26,8 @@ function AnimatedRoutes() {
         <Route path="/diagnose/photo" element={<ProtectedRoute><PageWrapper><DiagnosePhoto /></PageWrapper></ProtectedRoute>} />
         <Route path="/diagnose/xray" element={<ProtectedRoute><PageWrapper><DiagnoseXRay /></PageWrapper></ProtectedRoute>} />
         <Route path="/patients" element={<ProtectedRoute><PageWrapper><Patients /></PageWrapper></ProtectedRoute>} />
+        <Route path="/results" element={<ProtectedRoute><PageWrapper><Results /></PageWrapper></ProtectedRoute>} />
+        <Route path="/results/:diagnosisId" element={<ProtectedRoute><PageWrapper><Results /></PageWrapper></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );

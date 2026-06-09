@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
 import { Activity, Users, FileWarning, Camera } from "lucide-react";
 import DentalScene, { mockConditions } from "../components/DentalScene";
-import { getDashboardStats, getRecentDiagnoses } from '../lib/db';
+import { getDashboardStats, getRecentDiagnoses, getDiagnosisChartData, getConditionBreakdown } from '../lib/db';
 
 // SECTION 1: Pills Data
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -18,21 +18,7 @@ const statsData = [
   { label: "Scans Processed", value: "1,490", change: "+15.2%", isPositive: true, sparkline: [20, 30, 25, 40, 50, 45, 60], icon: Camera },
 ];
 
-// SECTION 3: Area Chart Data
-const areaData = Array.from({ length: 30 }, (_, i) => ({
-  date: `Day ${i + 1}`,
-  Photo: Math.floor(Math.random() * 50) + 10,
-  XRay: Math.floor(Math.random() * 50) + 20,
-}));
 
-// SECTION 3: Pie Chart Data
-const pieData = [
-  { name: "Cavity", value: 350, color: "#273d58" },
-  { name: "Gingivitis", value: 200, color: "#8B5CF6" },
-  { name: "Oral Thrush", value: 100, color: "#F59E0B" },
-  { name: "Bone Loss", value: 80, color: "#EF4444" },
-  { name: "Healthy", value: 450, color: "#10B981" },
-];
 
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
@@ -67,15 +53,21 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any[]>(statsData);
   const [recentActivity, setRecentActivity] = useState<any[]>(activityData);
   const [loading, setLoading] = useState(false);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [pieData, setPieData] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadDashboard() {
       try {
         setLoading(true)
-        const [statsDataResult, recent] = await Promise.all([
+        const [statsDataResult, recent, chart, pie] = await Promise.all([
           getDashboardStats(),
-          getRecentDiagnoses(5)
+          getRecentDiagnoses(5),
+          getDiagnosisChartData(),
+          getConditionBreakdown()
         ])
+        setChartData(chart || []);
+        setPieData(pie || []);
         
         if (statsDataResult) {
           setStats([
@@ -218,13 +210,13 @@ export default function Dashboard() {
           </div>
           <div className="h-[280px] w-full ml-[-20px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={areaData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} minTickGap={30} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="Photo" stroke="#273d58" strokeWidth={2} fillOpacity={0.15} fill="#273d58" />
-                <Area type="monotone" dataKey="XRay" stroke="#8B5CF6" strokeWidth={2} fillOpacity={0.15} fill="#8B5CF6" />
+                <Area type="monotone" dataKey="photo" stroke="#273d58" strokeWidth={2} fillOpacity={0.15} fill="#273d58" />
+                <Area type="monotone" dataKey="xray" stroke="#8B5CF6" strokeWidth={2} fillOpacity={0.15} fill="#8B5CF6" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
