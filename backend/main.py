@@ -20,7 +20,7 @@ load_dotenv()
 gemini_key = os.getenv("GEMINI_API_KEY")
 if gemini_key:
   genai.configure(api_key=gemini_key)
-  gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+  gemini_model = genai.GenerativeModel("gemini-flash-latest")
 else:
   gemini_model = None
 
@@ -139,12 +139,18 @@ def run_inference(model, image_bytes, mode) -> dict:
       tooth = map_bbox_to_tooth(
         x1, y1, x2, y2, img_width, img_height
       )
+      import uuid
       conditions.append({
+        "id": str(uuid.uuid4()),
         "tooth": tooth,
         "condition": condition,
         "severity": severity,
-        "confidence": confidence,
-        "bbox": [x1, y1, x2, y2]
+        "confidence": int(confidence * 100),
+        "bbox": [x1, y1, x2, y2],
+        "x": round((x1 / img_width) * 100, 2),
+        "y": round((y1 / img_height) * 100, 2),
+        "w": round(((x2 - x1) / img_width) * 100, 2),
+        "h": round(((y2 - y1) / img_height) * 100, 2)
       })
   overall = get_overall_severity(conditions)
   return {
@@ -270,11 +276,24 @@ async def diagnose_photo(
         sev = "mild"
       c["severity"] = sev.capitalize()
       if "confidence" not in c:
-        c["confidence"] = 0.85
+        c["confidence"] = 85
+      else:
+        # if float, convert to percentage integer if it's <= 1.0
+        if isinstance(c["confidence"], float) and c["confidence"] <= 1.0:
+            c["confidence"] = int(c["confidence"] * 100)
+            
       if "tooth" not in c:
         c["tooth"] = 0
-      # Add empty bbox since Gemini doesn't give coordinates
+        
+      import uuid
+      c["id"] = str(uuid.uuid4())
+      
+      # Add default coordinates for photo mode so SVG doesn't break
       c["bbox"] = []
+      c["x"] = 50
+      c["y"] = 50
+      c["w"] = 10
+      c["h"] = 10
     
     overall = get_overall_severity(conditions)
     

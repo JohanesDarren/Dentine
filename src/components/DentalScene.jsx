@@ -58,15 +58,17 @@ function ToothMesh({
   let emissiveColor = "#000000"
   let emissiveIntensity = 0
 
-  if (severity === "healthy" || severity === "healthy_marked") {
+  const sevStr = severity?.toLowerCase()
+
+  if (sevStr === "healthy" || sevStr === "healthy_marked") {
     fillColor = "#ECFDF5"
     emissiveColor = "#10B981"
     emissiveIntensity = 0.05
-  } else if (severity === "mild") {
+  } else if (sevStr === "mild") {
     fillColor = "#FFFBEB"
     emissiveColor = "#F59E0B"
     emissiveIntensity = 0.12
-  } else if (severity === "severe") {
+  } else if (sevStr === "severe") {
     fillColor = "#FFF1F2"
     emissiveColor = "#EF4444"
     emissiveIntensity = 0.18
@@ -311,11 +313,12 @@ export default function DentalScene({ conditions = [], onToothClick = null, size
   const condData = selectedTooth ? conditionMap[selectedTooth] : null
 
   let sevColors = { text: "text-gray-600", bg: "bg-gray-50", border: "border-gray-200", hex: "#94A3B8" }
-  if (condData?.severity === "healthy" || condData?.severity === "healthy_marked") {
+  const condSevStr = condData?.severity?.toLowerCase()
+  if (condSevStr === "healthy" || condSevStr === "healthy_marked") {
     sevColors = { text: "text-green-600", bg: "bg-green-50", border: "border-green-200", hex: "#10B981" }
-  } else if (condData?.severity === "mild") {
+  } else if (condSevStr === "mild") {
     sevColors = { text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", hex: "#F59E0B" }
-  } else if (condData?.severity === "severe") {
+  } else if (condSevStr === "severe") {
     sevColors = { text: "text-red-600", bg: "bg-red-50", border: "border-red-200", hex: "#EF4444" }
   }
 
