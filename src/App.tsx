@@ -8,6 +8,7 @@ import Patients from "./pages/Patients";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Results from "./pages/Results";
+import Settings from "./pages/Settings";
 import { AnimatePresence } from "framer-motion";
 import { PageWrapper } from "./components/ui";
 import { AuthProvider } from "./context/AuthContext";
@@ -28,6 +29,7 @@ function AnimatedRoutes() {
         <Route path="/patients" element={<ProtectedRoute><PageWrapper><Patients /></PageWrapper></ProtectedRoute>} />
         <Route path="/results" element={<ProtectedRoute><PageWrapper><Results /></PageWrapper></ProtectedRoute>} />
         <Route path="/results/:diagnosisId" element={<ProtectedRoute><PageWrapper><Results /></PageWrapper></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><PageWrapper><Settings /></PageWrapper></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );

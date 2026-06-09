@@ -91,9 +91,9 @@ export function TopNav() {
           <button className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 shadow-sm transition-colors">
             <Bell className="w-[18px] h-[18px]" />
           </button>
-          <button className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 shadow-sm transition-colors">
+          <Link to="/settings" className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 shadow-sm transition-colors">
             <Settings className="w-[18px] h-[18px]" />
-          </button>
+          </Link>
           <button onClick={handleSignOut} className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-red-500 shadow-sm transition-colors" title="Sign out">
             <LogOut className="w-[18px] h-[18px]" />
           </button>
