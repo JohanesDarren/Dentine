@@ -65,7 +65,8 @@ export async function createPatientAPI(data: {
   return response.data
 }
 
-export async function getPatientsAPI(userId: string) {
-  const response = await api.get(`/patients?user_id=${userId}`)
+export async function getPatientsAPI(userId?: string | null) {
+  const query = userId && userId !== 'undefined' ? `?user_id=${userId}` : ''
+  const response = await api.get(`/patients${query}`)
   return response.data.patients
 }
