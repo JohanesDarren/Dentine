@@ -135,9 +135,9 @@ export default function Patients() {
         </div>
       </div>
 
-      <div className="flex gap-6 w-full max-w-full">
-        {/* Left panel (45%) */}
-        <div className={selectedPatient ? "w-[45%]" : "w-full"}>
+      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-full">
+        {/* Left panel */}
+        <div className={selectedPatient ? "w-full lg:w-[45%]" : "w-full"}>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
             <div className="flex items-center gap-3 w-full">
               <div className="relative flex-1">
@@ -198,9 +198,9 @@ export default function Patients() {
           </div>
         </div>
 
-        {/* Right panel (55%) */}
+        {/* Right panel */}
         {selectedPatient && (
-          <div className="w-[55%] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-140px)] sticky top-6">
+          <div className="w-full lg:w-[55%] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-140px)] lg:sticky top-6">
             <div className="p-6 border-b border-gray-100 flex gap-5 items-center">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl ${getRiskColor(selectedPatient)}`}>
                 {getInitials(selectedPatient.name)}

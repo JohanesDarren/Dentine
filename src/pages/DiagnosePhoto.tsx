@@ -119,7 +119,7 @@ export default function DiagnosePhoto() {
                     </div>
                   </div>
                 )}
-                <SmartUploadZone onAnalyze={handleAnalyze} />
+                <SmartUploadZone onAnalyze={handleAnalyze} allowCamera={true} />
               </div>
             )}
           </>

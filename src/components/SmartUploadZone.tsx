@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, FolderOpen, ZoomIn, ZoomOut, RotateCw, Trash2 } from 'lucide-react';
+import { UploadCloud, FolderOpen, ZoomIn, ZoomOut, RotateCw, Trash2, Camera } from 'lucide-react';
 
-export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: string, file: File) => void }) {
+export default function SmartUploadZone({ onAnalyze, allowCamera }: { onAnalyze?: (fileUrl: string, file: File) => void, allowCamera?: boolean }) {
   const [state, setState] = useState<'IDLE' | 'DRAG_OVER' | 'UPLOADING' | 'UPLOADED'>('IDLE');
   const [progress, setProgress] = useState(0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -15,6 +15,7 @@ export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: s
   const [rotation, setRotation] = useState(0);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Handle Drag Events
   const handleDragOver = (e: React.DragEvent) => {
@@ -102,6 +103,14 @@ export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: s
         accept="image/*" 
         className="hidden" 
       />
+      <input 
+        type="file" 
+        ref={cameraInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*" 
+        capture="environment"
+        className="hidden" 
+      />
 
       <style>{`
         @keyframes scan {
@@ -168,13 +177,26 @@ export default function SmartUploadZone({ onAnalyze }: { onAnalyze?: (fileUrl: s
                     <UploadCloud className="w-12 h-12 text-[#94A3B8] mb-4" />
                   </motion.div>
                   <p className="text-[#475569] text-lg font-medium mb-1">Drop your image here</p>
-                  <p className="text-[#94A3B8] text-sm mb-2">or</p>
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-[#273d58] font-medium hover:underline mb-6 bg-transparent outline-none border-none cursor-pointer"
-                  >
-                    Browse files
-                  </button>
+                  <p className="text-[#94A3B8] text-sm mb-4">or</p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-white border-2 border-[#273d58] text-[#273d58] px-6 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                    >
+                      Browse files
+                    </button>
+                    {allowCamera && (
+                      <button 
+                        onClick={() => cameraInputRef.current?.click()}
+                        className="bg-[#273d58] text-white px-6 py-2.5 rounded-xl font-medium hover:bg-[#1e2f44] transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Take Photo
+                      </button>
+                    )}
+                  </div>
+                  
                   <p className="text-[#94A3B8] text-sm">Accepts JPG, PNG • Max 10MB</p>
                 </>
               ) : (

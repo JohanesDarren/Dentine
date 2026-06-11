@@ -128,7 +128,7 @@ export default function Dashboard() {
       {/* DASHBOARD HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4 pt-2">
         <h1 className="text-3xl font-medium text-gray-900 tracking-tight">Diagnostic Monitoring</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-sm cursor-pointer hover:bg-gray-800 transition-colors">
             22-12-2025
             <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
