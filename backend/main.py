@@ -410,7 +410,7 @@ async def get_patients(user_id: str = None):
   try:
     query = supabase_client.table("patients")\
       .select("*, diagnoses(count)")
-    if user_id:
+    if user_id and user_id not in ["undefined", "null"]:
       query = query.eq("user_id", user_id)
     response = query.order(
       "created_at", desc=True
@@ -433,7 +433,7 @@ async def create_patient(
       insert_data["gender"] = patient.gender
     if patient.notes is not None:
       insert_data["notes"] = patient.notes
-    if patient.user_id is not None:
+    if patient.user_id is not None and patient.user_id not in ["undefined", "null"]:
       insert_data["user_id"] = patient.user_id
     
     response = supabase_client.table("patients")\
